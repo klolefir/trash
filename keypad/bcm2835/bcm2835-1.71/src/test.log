@@ -1,0 +1,2 @@
+bcm2835_init: gpio mmap failed: Operation not permitted
+FAIL test (exit status: 1)
