@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 #include <bcm2835.h>
 #define ROWS 4
 #define COLS 3
@@ -71,15 +73,17 @@ int findHighCol()
 	return -1;
 }
 
-char get_key()
+char get_key(int fd)
 {
 	int colIndex;
 	for (int r = 0; r < ROWS; r++) {
 		bcm2835_gpio_write(rowPins[r], HIGH);
 		colIndex = findHighCol();
 		if (colIndex > -1) {
-			if (!pressedKey)
+			if (!pressedKey) {
 				pressedKey = keys[r][colIndex];
+				write(fd, pressedKey, sizeof(char));
+			}
 			return pressedKey;
 		}
 		bcm2835_gpio_write(rowPins[r], LOW);
@@ -100,6 +104,17 @@ void help()
 int main(int argc, char *argv[])
 {
 	int quiet = 0;
+
+	int fd = open("keypad_data", O_WRONLY | O_TRUNC);
+
+	time_t T = time(NULL);
+	struct tm tm = *localtime(&T);
+
+	if (argc <= 2) {
+		fprintf(stderr, "Enter pipe name!\n");
+		return 0;
+	}
+
 	if (argc > 1) {
 		if ((strcmp(argv[1], "-h") == 0)) {
 			help();
@@ -111,16 +126,20 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 	}
+
+	
+
 	bcm2835_init();
 	init_keypad();
 	if (!quiet)
 		system("clear");
 	while (1) {
-		char x = get_key();
+		char x = get_key(fd);
 		if (x) {
 			if (!quiet) {
 				system("clear");
-				printf("pressed: %c\n", x);
+				printf("%02d:%02d:%02d\n", tm.tm_hour, tm.tm_min, tm.tm_sec);
+				printf(" pressed: %c\n", x);
 			} else
 				printf("%c\n", x);
 		} else if (!quiet) {
@@ -131,5 +150,6 @@ int main(int argc, char *argv[])
 		fflush(stdout);
 	}
 	bcm2835_close();
+	close(fd);
 	return 0;
 }

@@ -25,7 +25,10 @@
 #include <bcm2835.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #define STEP_DELAY 1
+
+enum { buff_size = 1024 };
 
 /*
 2000  7 RPM
@@ -44,9 +47,7 @@
 int step = 0;
 
 void loop()
-{
-	switch (step) {
-	case 0:
+{ switch (step) { case 0:
 		bcm2835_gpio_write(Pin1, LOW);
 		bcm2835_gpio_write(Pin2, LOW);
 		bcm2835_gpio_write(Pin3, LOW);
@@ -115,6 +116,15 @@ int main(int argc, char *argv[])
 {
 	int arg_N = 1;
 	int quiet = 0;
+	char angle_str[buff_size];
+	int count;
+	int fd;
+
+	if (argc <= 2) {
+		fprintf(stderr, "Enter pipe name!\n");
+		return 0;
+	}
+
 	if (argc > 1) {
 		if ((strcmp(argv[1], "-h") == 0)) {
 			help();
@@ -130,10 +140,10 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-	if (argc < 3) {
+	/*if (argc < 3) {
 		help();
 		return (-1);
-	}
+	}*/
 
 	if (!quiet)
 		printf("\nThe Stepper Motor application was started\n\n");
@@ -142,7 +152,23 @@ int main(int argc, char *argv[])
 
 	step_delay = atoi(argv[arg_N]);
 	arg_N++;
-	angle = atoi(argv[arg_N]);
+	//angle = atoi(argv[arg_N]);
+
+	fd = open("step_motor_data", O_RDONLY);
+	count = read(fd, angle_str, sizeof(angle_str));
+	if(count < 0) {
+		fprintf(stderr, "Read error!\n");
+		return 0;
+	} else if(count > sizeof(angle_str)) {
+		fprintf(stderr, "Bad data!\n");
+		return 0;
+	}
+	angle = atoi(angle_str);
+	if(angle == 0) {
+		fprintf(stderr, "Atoi Error!\n");
+		return 0;
+	}
+	
 	if (angle < 0)
 		rotate_dir = 0;
 	else

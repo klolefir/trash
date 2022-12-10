@@ -1,13 +1,13 @@
 CC = gcc
 SRCMODULES =
 OBJMODULES = $(SRCMODULES:.c=.o) 
-LDFLAGS = -D VAR6 -lbcm2835
+LDFLAGS = -lbcm2835
 CFLAGS = -g -Wall
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
-keypad_BDA: keypad.c $(OBJMODULES)
+step_motor_BDA: step_motor.c $(OBJMODULES)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
-run: keypad_BDA
-	./keypad_BDA
+run: step_motor_BDA
+	./step_motor_BDA
 clean:
-	rm -f *.o keypad_BDA
+	rm -f *.o step_motor_BDA

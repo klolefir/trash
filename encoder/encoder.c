@@ -41,8 +41,10 @@ void help()
 
 void callback(int way)
 {
+	int fd = open("encoder_data", O_WRONLY)
 	static int pos = 0;
 	pos -= way*360/20;
+	write(fd, pos, sizeof(pos));
 	if (!quiet)
 		printf("angle increment: %d\n", pos);
 	if (quiet)
@@ -52,6 +54,8 @@ void callback(int way)
 
 int main(int argc, char *argv[])
 {
+	int fd = open("encoder_data", O_WRONLY | O_TRUNC);
+	close(fd);
 	if (argc > 1) {
 		if ((strcmp(argv[1], "-h") == 0)) {
 			help();
